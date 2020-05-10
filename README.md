@@ -12,3 +12,6 @@ https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_d
 https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv
 
 ___________________________________________________________________
+Daily prediction: run in the shell 
+
+$ ./predict.sh
