@@ -33,6 +33,12 @@ confirmed = pd.read_csv('time_series_covid19_confirmed_global.csv')
 deaths = pd.read_csv('time_series_covid19_deaths_global.csv')
 recovered = pd.read_csv('time_series_covid19_recovered_global.csv')
 
+"""
+# only study some countries
+cp = pd.read_csv('country_to_study.csv')
+countries = np.array(cp["Country"], dtype=str)
+populations = np.array(cp["Populations"], dtype=float)
+"""
 
 col_names = confirmed.columns.tolist()
 start = datetime.datetime.strptime(col_names[4], "%m/%d/%y")
@@ -69,7 +75,7 @@ for num_day_pred in [2, 7, 30]:
             try:
                 next_confirmed = model.predict(
                     confirmed.iloc[idx][col_names[4:]].to_numpy(dtype=float), num_day_pred,
-                    parameter_list)
+                    parameter_list, loc2_str)
                 n_str = str(next_confirmed) + ",,,"
             except:
                 next_confirmed = float("NaN")
@@ -80,12 +86,12 @@ for num_day_pred in [2, 7, 30]:
 
                 ###TODO: confident interval not yet implemented
                 try:
-                    # there is a bug that there are several states for same country that can cause problem
+                    # there is a bug that there are several states for some country that can cause problem
                     new_recovered = recovered.loc[recovered["Country/Region"] == country]
                     next_recovered = model.predict(
                         new_recovered.loc[new_recovered["Province/State"].isnull()][col_names[4:]].to_numpy(
                             dtype=float)[0], num_day_pred,
-                        parameter_list)
+                        parameter_list, country)
                     next_recovered = min(next_confirmed, next_recovered)
                     r_str = str(next_recovered) + ",,,"
                 except:
@@ -94,15 +100,13 @@ for num_day_pred in [2, 7, 30]:
 
                 ###TODO: confident interval not yet implemented
                 try:
-                    # there is a bug that there are several states for same country that can cause problem
+                    # there is a bug that there are several states for some country that can cause problem
                     new_deaths = deaths.loc[deaths["Country/Region"] == country]
                     next_deaths = model.predict(
                         new_deaths.loc[new_deaths["Province/State"].isnull()][col_names[4:]].to_numpy(dtype=float)[
                             0], num_day_pred,
-                        parameter_list)
+                        parameter_list, country)
                     next_deaths = min(next_deaths, next_confirmed)
-                    
-                    # Adding some noise such that confirmed >= recovered + death, and the predicted value will not less than the initial value
                     try:
                         temp = int(new_deaths.loc[new_deaths["Province/State"].isnull()][col_names[-1]])
                         recover_temp = int(new_recovered.loc[new_recovered["Province/State"].isnull()][col_names[-1]])
@@ -127,8 +131,7 @@ for num_day_pred in [2, 7, 30]:
                 try:
                     next_recovered = model.predict(
                         recovered.loc[recovered["Province/State"] == province][col_names[4:]].to_numpy(dtype=float)[0],
-                        num_day_pred,
-                        parameter_list)
+                        num_day_pred, parameter_list, province)
                     next_recovered = min(next_confirmed, next_recovered)
                     r_str = str(next_recovered) + ",,,"
                 except:
@@ -138,8 +141,7 @@ for num_day_pred in [2, 7, 30]:
                 try:
                     next_deaths = model.predict(
                         deaths.loc[deaths["Province/State"] == province][col_names[4:]].to_numpy(dtype=float)[0],
-                        num_day_pred,
-                        parameter_list)
+                        num_day_pred, parameter_list, province)
                     next_deaths = min(next_deaths, next_confirmed)
                     try:
                         temp = int(deaths.loc[deaths["Province/State"] == province][col_names[-1]])
